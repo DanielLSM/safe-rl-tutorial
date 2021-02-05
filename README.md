@@ -51,4 +51,8 @@ Safe Reinforcement Learning via Shielding
 Safe and Efficient Off-Policy Reinforcement Learning
   [[ref]](https://arxiv.org/abs/1606.02647)
 
+[5] Lillicrap, Timothy P.
+Continuous control with deep reinforcement learning.
+  [[ref]](https://arxiv.org/abs/1509.02971)
+
 2 ideas: use inverted car pendulum with a trust region. use lunar landing with certain thurst

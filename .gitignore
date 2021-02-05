@@ -127,5 +127,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+#my ignores
+.vscode/
 README1*
-*.vscode
+tutorial/dqn.py
