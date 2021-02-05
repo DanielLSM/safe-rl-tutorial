@@ -18,8 +18,13 @@ from rpm import Buffer, update_target
 
 
 class DDPG:
-    def __init__(self, problem_name, num_states, num_actions, lower_bound,
-                 upper_bound):
+    def __init__(self,
+                 problem_name,
+                 num_states,
+                 num_actions,
+                 lower_bound,
+                 upper_bound,
+                 total_episodes=100):
 
         self.problem_name = problem_name
         self.num_states = num_states
@@ -49,7 +54,7 @@ class DDPG:
         self.critic_optimizer = tf.keras.optimizers.Adam(self.critic_lr)
         self.actor_optimizer = tf.keras.optimizers.Adam(self.actor_lr)
 
-        self.total_episodes = 100
+        self.total_episodes = total_episodes
         # Discount factor for future rewards
         self.gamma = 0.99
         # Used to update target networks
@@ -155,7 +160,8 @@ if __name__ == '__main__':
                       num_states=num_states,
                       num_actions=num_actions,
                       lower_bound=lower_bound,
-                      upper_bound=upper_bound)
+                      upper_bound=upper_bound,
+                      total_episodes=100)
 
     # To store reward history of each episode
     ep_reward_list = []

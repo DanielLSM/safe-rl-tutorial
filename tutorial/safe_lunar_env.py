@@ -17,6 +17,7 @@ class SafeLunarEnv(gym.Wrapper):
         self.env = env
 
     def step(self, action):
+        action = np.clip(action, -0.7, 0.7)
         next_state, reward, done, info = self.env.step(action)
         # print("lul")
         return next_state, reward, done, info
@@ -31,10 +32,10 @@ if __name__ == '__main__':
     # problem = "Pendulum-v0"
 
     # env = gym.make(problem)
-    # env = SafeLunarEnv(env)
 
     problem = "LunarLanderContinuous-v2"
     env = LunarLanderContinuous()
+    env = SafeLunarEnv(env)
 
     num_states = env.observation_space.shape[0]
     print("Size of State Space ->  {}".format(num_states))
@@ -51,7 +52,8 @@ if __name__ == '__main__':
                       num_states=num_states,
                       num_actions=num_actions,
                       lower_bound=lower_bound,
-                      upper_bound=upper_bound)
+                      upper_bound=upper_bound,
+                      total_episodes=1000)
 
     # To store reward history of each episode
     ep_reward_list = []
