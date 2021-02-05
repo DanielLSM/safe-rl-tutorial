@@ -16,26 +16,16 @@ import matplotlib.pyplot as plt
 from exploration import OUActionNoise
 from rpm import Buffer, update_target
 
-problem = "Pendulum-v0"
-env = gym.make(problem)
-
-num_states = env.observation_space.shape[0]
-print("Size of State Space ->  {}".format(num_states))
-num_actions = env.action_space.shape[0]
-print("Size of Action Space ->  {}".format(num_actions))
-
-upper_bound = env.action_space.high[0]
-lower_bound = env.action_space.low[0]
-
-print("Max Value of Action ->  {}".format(upper_bound))
-print("Min Value of Action ->  {}".format(lower_bound))
-
 
 class DDPG:
-    def __init__(self, num_states, num_actions):
+    def __init__(self, problem_name, num_states, num_actions, lower_bound,
+                 upper_bound):
 
+        self.problem_name = problem_name
         self.num_states = num_states
-        self.num_actions = num_states
+        self.num_actions = num_actions
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
 
         self.std_dev = 0.2
         self.ou_noise = OUActionNoise(mean=np.zeros(1),
@@ -65,36 +55,36 @@ class DDPG:
         # Used to update target networks
         self.tau = 0.005
 
-        self.buffer = Buffer(
-            50000,
-            64,
-            gamma=self.gamma,
-        )
+        self.buffer = Buffer(50000,
+                             64,
+                             gamma=self.gamma,
+                             num_states=self.num_states,
+                             num_actions=self.num_actions)
 
     def get_actor(self):
         # Initialize weights between -3e-3 and 3-e3
         last_init = tf.random_uniform_initializer(minval=-0.003, maxval=0.003)
 
-        inputs = layers.Input(shape=(num_states, ))
+        inputs = layers.Input(shape=(self.num_states, ))
         out = layers.Dense(256, activation="relu")(inputs)
         out = layers.Dense(256, activation="relu")(out)
-        outputs = layers.Dense(1,
+        outputs = layers.Dense(self.num_actions,
                                activation="tanh",
                                kernel_initializer=last_init)(out)
 
         # Our upper bound is 2.0 for Pendulum.
-        outputs = outputs * upper_bound
+        outputs = outputs * self.upper_bound
         model = tf.keras.Model(inputs, outputs)
         return model
 
     def get_critic(self):
         # State as input
-        state_input = layers.Input(shape=(num_states))
+        state_input = layers.Input(shape=(self.num_states))
         state_out = layers.Dense(16, activation="relu")(state_input)
         state_out = layers.Dense(32, activation="relu")(state_out)
 
         # Action as input
-        action_input = layers.Input(shape=(num_actions))
+        action_input = layers.Input(shape=(self.num_actions))
         action_out = layers.Dense(32, activation="relu")(action_input)
 
         # Both are passed through seperate layer before concatenating
@@ -116,27 +106,56 @@ class DDPG:
         sampled_actions = sampled_actions.numpy() + noise
 
         # We make sure action is within bounds
-        legal_action = np.clip(sampled_actions, lower_bound, upper_bound)
+        legal_action = np.clip(sampled_actions, self.lower_bound,
+                               self.upper_bound)
 
         return [np.squeeze(legal_action)]
 
+    def save_parameters(self):
+
+        # Save the weights
+        actor_model.save_weights("pendulum_actor.h5")
+        critic_model.save_weights("pendulum_critic.h5")
+
+        target_actor.save_weights("pendulum_target_actor.h5")
+        target_critic.save_weights("pendulum_target_critic.h5")
+
 
 if __name__ == '__main__':
+
     # problem = "Pendulum-v0"
     # env = gym.make(problem)
+
+    # num_states = env.observation_space.shape[0]
+    # print("Size of State Space ->  {}".format(num_states))
+    # num_actions = env.action_space.shape[0]
+    # print("Size of Action Space ->  {}".format(num_actions))
+
+    # upper_bound = env.action_space.high[0]
+    # lower_bound = env.action_space.low[0]
+
+    # print("Max Value of Action ->  {}".format(upper_bound))
+    # print("Min Value of Action ->  {}".format(lower_bound))
+
+    problem = "Pendulum-v0"
+    env = gym.make(problem)
 
     num_states = env.observation_space.shape[0]
     print("Size of State Space ->  {}".format(num_states))
     num_actions = env.action_space.shape[0]
     print("Size of Action Space ->  {}".format(num_actions))
 
-    ddpg_agent = DDPG(num_states=num_states, num_actions=num_actions)
-
     upper_bound = env.action_space.high[0]
     lower_bound = env.action_space.low[0]
 
     print("Max Value of Action ->  {}".format(upper_bound))
     print("Min Value of Action ->  {}".format(lower_bound))
+
+    ddpg_agent = DDPG(problem_name=problem,
+                      num_states=num_states,
+                      num_actions=num_actions,
+                      lower_bound=lower_bound,
+                      upper_bound=upper_bound)
 
     # To store reward history of each episode
     ep_reward_list = []
@@ -148,6 +167,8 @@ if __name__ == '__main__':
 
         prev_state = env.reset()
         episodic_reward = 0
+        render_episodes = 10
+        render = not (ep % render_episodes)
 
         while True:
             # Uncomment this to see the Actor in action
@@ -155,10 +176,10 @@ if __name__ == '__main__':
             # env.render()
 
             tf_prev_state = tf.expand_dims(tf.convert_to_tensor(prev_state), 0)
-
             action = ddpg_agent.policy(tf_prev_state, ddpg_agent.ou_noise)
             # Recieve state and reward from environment.
             state, reward, done, info = env.step(action)
+            if render: env.render()
 
             ddpg_agent.buffer.record((prev_state, action, reward, state))
             episodic_reward += reward

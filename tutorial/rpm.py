@@ -7,23 +7,31 @@ import tensorflow as tf
 import numpy as np
 import gym
 
-problem = "Pendulum-v0"
-env = gym.make(problem)
+# problem = "Pendulum-v0"
+# env = gym.make(problem)
 
-num_states = env.observation_space.shape[0]
-print("Size of State Space ->  {}".format(num_states))
-num_actions = env.action_space.shape[0]
-print("Size of Action Space ->  {}".format(num_actions))
+# num_states = env.observation_space.shape[0]
+# print("Size of State Space ->  {}".format(num_states))
+# num_actions = env.action_space.shape[0]
+# print("Size of Action Space ->  {}".format(num_actions))
 
-upper_bound = env.action_space.high[0]
-lower_bound = env.action_space.low[0]
+# upper_bound = env.action_space.high[0]
+# lower_bound = env.action_space.low[0]
 
-print("Max Value of Action ->  {}".format(upper_bound))
-print("Min Value of Action ->  {}".format(lower_bound))
+# print("Max Value of Action ->  {}".format(upper_bound))
+# print("Min Value of Action ->  {}".format(lower_bound))
 
 
 class Buffer:
-    def __init__(self, buffer_capacity=100000, batch_size=64, gamma=0.99):
+    def __init__(self,
+                 buffer_capacity=100000,
+                 batch_size=64,
+                 gamma=0.99,
+                 num_states=None,
+                 num_actions=None):
+
+        self.num_states = num_states
+        self.num_actions = num_actions
         self.gamma = gamma
         # Number of "experiences" to store at max
         self.buffer_capacity = buffer_capacity
@@ -46,6 +54,7 @@ class Buffer:
         # replacing old records
         index = self.buffer_counter % self.buffer_capacity
 
+        # print(obs_tuple)
         self.state_buffer[index] = obs_tuple[0]
         self.action_buffer[index] = obs_tuple[1]
         self.reward_buffer[index] = obs_tuple[2]
