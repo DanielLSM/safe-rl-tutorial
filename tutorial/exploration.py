@@ -3,6 +3,8 @@ Implementation of Ornstein-Uhlenbeck process for generating noise
 
 """
 
+import numpy as np
+
 
 class OUActionNoise:
     def __init__(self,

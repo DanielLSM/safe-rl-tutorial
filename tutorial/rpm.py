@@ -3,9 +3,28 @@ Implementation of replay memory or Experience Replay
 
 """
 
+import tensorflow as tf
+import numpy as np
+import gym
+
+problem = "Pendulum-v0"
+env = gym.make(problem)
+
+num_states = env.observation_space.shape[0]
+print("Size of State Space ->  {}".format(num_states))
+num_actions = env.action_space.shape[0]
+print("Size of Action Space ->  {}".format(num_actions))
+
+upper_bound = env.action_space.high[0]
+lower_bound = env.action_space.low[0]
+
+print("Max Value of Action ->  {}".format(upper_bound))
+print("Min Value of Action ->  {}".format(lower_bound))
+
 
 class Buffer:
-    def __init__(self, buffer_capacity=100000, batch_size=64):
+    def __init__(self, buffer_capacity=100000, batch_size=64, gamma=0.99):
+        self.gamma = gamma
         # Number of "experiences" to store at max
         self.buffer_capacity = buffer_capacity
         # Num of tuples to train on.
@@ -38,18 +57,14 @@ class Buffer:
     # TensorFlow to build a static graph out of the logic and computations in our function.
     # This provides a large speed up for blocks of code that contain many small TensorFlow operations such as this one.
     @tf.function
-    def update(
-        self,
-        state_batch,
-        action_batch,
-        reward_batch,
-        next_state_batch,
-    ):
+    def update(self, state_batch, action_batch, reward_batch, next_state_batch,
+               target_actor, target_critic, actor_model, critic_model,
+               actor_optimizer, critic_optimizer):
         # Training and updating Actor & Critic networks.
         # See Pseudo Code.
         with tf.GradientTape() as tape:
             target_actions = target_actor(next_state_batch, training=True)
-            y = reward_batch + gamma * target_critic(
+            y = reward_batch + self.gamma * target_critic(
                 [next_state_batch, target_actions], training=True)
             critic_value = critic_model([state_batch, action_batch],
                                         training=True)
@@ -72,7 +87,8 @@ class Buffer:
             zip(actor_grad, actor_model.trainable_variables))
 
     # We compute the loss and update parameters
-    def learn(self):
+    def learn(self, target_actor, target_critic, actor_model, critic_model,
+              actor_optimizer, critic_optimizer):
         # Get sampling range
         record_range = min(self.buffer_counter, self.buffer_capacity)
         # Randomly sample indices
@@ -86,7 +102,9 @@ class Buffer:
         next_state_batch = tf.convert_to_tensor(
             self.next_state_buffer[batch_indices])
 
-        self.update(state_batch, action_batch, reward_batch, next_state_batch)
+        self.update(state_batch, action_batch, reward_batch, next_state_batch,
+                    target_actor, target_critic, actor_model, critic_model,
+                    actor_optimizer, critic_optimizer)
 
 
 # This update target parameters slowly
