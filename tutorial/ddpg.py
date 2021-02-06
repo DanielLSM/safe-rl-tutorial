@@ -125,6 +125,15 @@ class DDPG:
         target_actor.save_weights("pendulum_target_actor.h5")
         target_critic.save_weights("pendulum_target_critic.h5")
 
+    def load_parameters(self):
+
+        # Save the weights
+        actor_model.load_parameters("pendulum_actor.h5")
+        critic_model.load_parameters("pendulum_critic.h5")
+
+        target_actor.load_parameters("pendulum_target_actor.h5")
+        target_critic.load_parameters("pendulum_target_critic.h5")
+
 
 if __name__ == '__main__':
 

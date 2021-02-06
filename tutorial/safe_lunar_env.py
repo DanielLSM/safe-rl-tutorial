@@ -8,19 +8,43 @@ from exploration import OUActionNoise
 from rpm import Buffer, update_target
 
 from ddpg import DDPG
+from shield import Shield
 from lundar_landing import LunarLanderContinuous
+
+# Fuel is infinite, so an agent can learn to fly and then land on its first attempt.
+# Action is two real values vector from -1 to +1. First controls main engine, -1..0 off, 0..+1 throttle from 50% to 100% power.
+# Engine can't work with less than 50% power.
+# Second value -1.0..-0.5 fire left engine, +0.5..+1.0 fire right engine, -0.5..0.5 off.
 
 
 class SafeLunarEnv(gym.Wrapper):
     def __init__(self, env):
         super().__init__(env)
         self.env = env
+        self.shield = Shield()
+        # self.exploded = 0
+        self.steps_to_explosion = 10
 
     def step(self, action):
-        action = np.clip(action, -0.7, 0.7)
+        action = self.shield.shield_action(action)
         next_state, reward, done, info = self.env.step(action)
-        # print("lul")
+        done_explosion, reward_explosion = self.check_explosion(*action)
+        done = done or done_explosion
+        reward = reward + reward_explosion
+        # print(self.steps_to_explosion)
         return next_state, reward, done, info
+
+    def reset(self):
+        self.steps_to_explosion = 20
+        return self.env.reset()
+
+    def check_explosion(self, *action):
+        if np.abs(action[1]) < -0.8 or np.abs(action[1]) > 0.8 or np.abs(
+                action[0]) > 0.9:
+            self.steps_to_explosion -= 1
+        if self.steps_to_explosion == 0:
+            return True, -1000
+        return False, 0
 
 
 if __name__ == '__main__':
