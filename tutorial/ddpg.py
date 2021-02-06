@@ -97,7 +97,7 @@ class DDPG:
 
         out = layers.Dense(256, activation="relu")(concat)
         out = layers.Dense(256, activation="relu")(out)
-        outputs = layers.Dense(1)(out)
+        outputs = layers.Dense(self.num_actions)(out)
 
         # Outputs single value for give state-action
         model = tf.keras.Model([state_input, action_input], outputs)

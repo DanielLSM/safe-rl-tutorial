@@ -8,9 +8,9 @@ import numpy as np
 
 class Shield:
     def __init__(self,
-                 thresholds_main_engine=0.9,
-                 thresholds_left_engine=-.8,
-                 thresholds_right_engine=.8):
+                 thresholds_main_engine=1,
+                 thresholds_left_engine=-1,
+                 thresholds_right_engine=1):
         self.thresholds_main_engine = thresholds_main_engine
         self.thresholds_left_engine = thresholds_left_engine
         self.thresholds_right_engine = thresholds_right_engine

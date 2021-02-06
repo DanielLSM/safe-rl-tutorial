@@ -18,12 +18,12 @@ from lundar_landing import LunarLanderContinuous
 
 
 class SafeLunarEnv(gym.Wrapper):
-    def __init__(self, env):
+    def __init__(self, env, shield=Shield()):
         super().__init__(env)
         self.env = env
-        self.shield = Shield()
+        self.shield = shield
         # self.exploded = 0
-        self.steps_to_explosion = 10
+        self.steps_to_explosion = 20
 
     def step(self, action):
         action = self.shield.shield_action(action)
