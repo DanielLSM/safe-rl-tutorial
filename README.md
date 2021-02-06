@@ -1,6 +1,8 @@
 # safe-rl-tutorial
 This repository provides the code source of the tutorial to be held on safe reinforcement learning. The key concepts of the tutorial are following: 
-- (1) Understanding a simple 
+- (1) Understanding a simple DRL algorithm: Deep Deterministic Policy Gradient (DDPG)
+- (2) Training said algorithm in a couple of environments, 2 benchmarks and one altered environment for safe reinforcement learning
+- (3) Create a shield, to enable safe training for the agent!
 
 ----------
 # Instalation
