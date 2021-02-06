@@ -24,11 +24,11 @@ cd safe-rl-tutorial
 ```
 3) Install the anaconda environment
 ```
-conda env create -f saferl.yml
+conda env create -f safe-rl.yml
 ```
 4) Load the anaconda environment
 ```
-conda activate saferl
+conda activate safe-rl
 ```
 
 ## References
