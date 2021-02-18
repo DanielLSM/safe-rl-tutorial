@@ -47,6 +47,79 @@ class SafeLunarEnv(gym.Wrapper):
         return False, 0
 
 
+class UserFeedbackShield:
+    def __init__(self):
+        # https://stats.stackexchange.com/questions/237037/bayesian-updating-with-new-data
+        # https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf
+        self.shield_distribution_main_engine = NormalNormalKnownVar(1)
+        self.shield_distribution_left_engine = NormalNormalKnownVar(1)
+        self.shield_distribution_right_engine = NormalNormalKnownVar(1)
+
+        self.oracle_main_engine = NormalNormalKnownVar(0.01)
+        self.oracle_left_engine = NormalNormalKnownVar(0.01)
+        self.oracle_right_engine = NormalNormalKnownVar(0.01)
+
+    def update_oracle_with_last_action(last_action, mode='all'):
+        modes = ['left', 'left_right', 'all']
+        assert mode in modes
+
+        if np.abs(last_action[1]) < -0.8:
+            self.oracle_left_engine = NormalNormalKnownVar(
+                0.01,
+                prior_mean=(self.oracle_left_engine.mean + 0.05),
+                prior_var=0.01)
+            self.update_shield_left_from_oracle()
+
+        if np.abs(last_action[1]) > 0.8 and (mode == 'left_right'
+                                             or mode == 'all'):
+            self.oracle_left_engine = NormalNormalKnownVar(
+                0.01,
+                prior_mean=(self.oracle_right_engine.mean + 0.05),
+                prior_var=0.01)
+            self.update_shield_right_from_oracle()
+
+        if np.abs(last_action[0]) > 0.9 and mode == 'all':
+            self.oracle_left_engine = NormalNormalKnownVar(
+                0.01,
+                prior_mean=(self.oracle_main_engine.mean + 0.05),
+                prior_var=0.01)
+            self.update_shield_main_from_oracle()
+
+    def update_shield_left_from_oracle(self):
+        self.shield_distribution_left_engine = self.shield_distribution_left_engine.update(
+            self.oracle_left_engine.sample())
+
+    def update_shield_right_from_oracle(self):
+        self.shield_distribution_right_engine = self.shield_distribution_right_engine.update(
+            self.oracle_right_engine.sample())
+
+    def update_shield_main_from_oracle(self):
+        self.shield_distribution_main_engine = self.shield_distribution_main_engine.update(
+            self.oracle_main_engine.sample())
+
+    # def create_oracle
+
+    def demo(self):
+        import numpy as np
+        from matplotlib import pyplot as plt
+
+        from conjugate_prior import NormalNormalKnownVar
+        model = NormalNormalKnownVar(1)
+        model.plot(-5, 5)
+        plt.show()
+        new_model = model
+
+        for _ in range(10):
+            new_model = NormalNormalKnownVar(0.01,
+                                             prior_mean=(new_model.mean +
+                                                         0.05),
+                                             prior_var=0.01)
+            model = model.update([new_model.sample()])
+            model.plot(-5, 5)
+        print(model.sample())
+        plt.show()
+
+
 if __name__ == '__main__':
 
     # 'RocketLander-v0'
