@@ -26,106 +26,105 @@ class SafeLunarEnv(gym.Wrapper):
         self.shield = shield
         # self.exploded = 0
         self.steps_to_explosion = 20
+        self.observation_space = env.observation_space
+        self.action_space = env.action_space
+        # self.observation_space.shape[0] = env.observation_space.shape[0]
 
     def step(self, action):
         action = self.shield.shield_action(action)
         next_state, reward, done, info = self.env.step(action)
-        done_explosion, reward_explosion = self.check_explosion(*action)
-        if np.abs(action[1]) < -0.8 or np.abs(action[1]) > 0.8 or np.abs(
-                action[0]) > 0.9:
-            warning_state = 1
-            reward = reward - 10
+        # done_explosion, reward_explosion = self.check_explosion(*action)
+        if np.abs(action[1]) < -0.7 or np.abs(action[1]) > 0.7 or np.abs(
+                action[0]) > 0.7:
+            reward = reward - 50
             # print(warning_state)
-        else:
-            warning_state = 0
 
-        next_state = np.append(next_state, warning_state)
+        # next_state = np.append(next_state, warning_state)
 
-        done = done or done_explosion
-        reward = reward + reward_explosion
+        # done = done or done_explosion
+        # reward = reward + reward_explosion
         # print(self.steps_to_explosion)
         return next_state, reward, done, info
 
     def reset(self):
-        self.steps_to_explosion = 20
+        # self.steps_to_explosion = 20
         first_state = self.env.reset()
-        first_state = np.append(first_state, 0)
         return first_state
 
-    def check_explosion(self, *action):
-        if np.abs(action[1]) < -0.8 or np.abs(action[1]) > 0.8 or np.abs(
-                action[0]) > 0.9:
-            self.steps_to_explosion -= 1
-        if self.steps_to_explosion == 0:
-            return True, -1000
-        return False, 0
+    # def check_explosion(self, *action):
+    #     if np.abs(action[1]) < -0.8 or np.abs(action[1]) > 0.8 or np.abs(
+    #             action[0]) > 0.9:
+    #         self.steps_to_explosion -= 1
+    #     if self.steps_to_explosion == 0:
+    #         return True, -1000
+    #     return False, 0
 
 
-class UserFeedbackShield:
-    def __init__(self):
-        # https://stats.stackexchange.com/questions/237037/bayesian-updating-with-new-data
-        # https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf
-        self.shield_distribution_main_engine = NormalNormalKnownVar(
-            1, prior_mean=1, prior_var=0.01)
-        self.shield_distribution_left_engine = NormalNormalKnownVar(
-            1, prior_mean=-1, prior_var=0.01)
-        self.shield_distribution_right_engine = NormalNormalKnownVar(
-            1, prior_mean=1, prior_var=0.01)
+# class UserFeedbackShield:
+#     def __init__(self):
+#         # https://stats.stackexchange.com/questions/237037/bayesian-updating-with-new-data
+#         # https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf
+#         self.shield_distribution_main_engine = NormalNormalKnownVar(
+#             1, prior_mean=1, prior_var=0.01)
+#         self.shield_distribution_left_engine = NormalNormalKnownVar(
+#             1, prior_mean=-1, prior_var=0.01)
+#         self.shield_distribution_right_engine = NormalNormalKnownVar(
+#             1, prior_mean=1, prior_var=0.01)
 
-        self.oracle_main_engine = self.shield_distribution_right_engine = NormalNormalKnownVar(
-            1, prior_mean=1, prior_var=0.001)
-        self.oracle_left_engine = self.shield_distribution_right_engine = NormalNormalKnownVar(
-            1, prior_mean=-1, prior_var=0.001)
-        self.oracle_right_engine = self.shield_distribution_right_engine = NormalNormalKnownVar(
-            1, prior_mean=1, prior_var=0.001)
+#         self.oracle_main_engine = self.shield_distribution_right_engine = NormalNormalKnownVar(
+#             1, prior_mean=1, prior_var=0.001)
+#         self.oracle_left_engine = self.shield_distribution_right_engine = NormalNormalKnownVar(
+#             1, prior_mean=-1, prior_var=0.001)
+#         self.oracle_right_engine = self.shield_distribution_right_engine = NormalNormalKnownVar(
+#             1, prior_mean=1, prior_var=0.001)
 
-    def get_current_shield(self):
-        return Shield(thresholds_main_engine=self.
-                      shield_distribution_main_engine.sample(),
-                      thresholds_left_engine=self.
-                      shield_distribution_left_engine.sample(),
-                      thresholds_right_engine=self.
-                      shield_distribution_right_engine.sample())
+#     def get_current_shield(self):
+#         return Shield(thresholds_main_engine=self.
+#                       shield_distribution_main_engine.sample(),
+#                       thresholds_left_engine=self.
+#                       shield_distribution_left_engine.sample(),
+#                       thresholds_right_engine=self.
+#                       shield_distribution_right_engine.sample())
 
-    def update_oracle_with_last_action(self, last_action, mode='all'):
-        modes = ['left', 'left_right', 'all']
-        assert mode in modes
+#     def update_oracle_with_last_action(self, last_action, mode='all'):
+#         modes = ['left', 'left_right', 'all']
+#         assert mode in modes
 
-        if np.abs(last_action[1]) < -0.8:
-            self.oracle_left_engine = NormalNormalKnownVar(
-                0.01,
-                prior_mean=(self.oracle_left_engine.mean + 0.05),
-                prior_var=0.01)
-            self.update_shield_left_from_oracle()
+#         if np.abs(last_action[1]) < -0.8:
+#             self.oracle_left_engine = NormalNormalKnownVar(
+#                 0.01,
+#                 prior_mean=(self.oracle_left_engine.mean + 0.05),
+#                 prior_var=0.01)
+#             self.update_shield_left_from_oracle()
 
-        if np.abs(last_action[1]) > 0.8 and (mode == 'left_right'
-                                             or mode == 'all'):
-            self.oracle_left_engine = NormalNormalKnownVar(
-                0.01,
-                prior_mean=(self.oracle_right_engine.mean - 0.05),
-                prior_var=0.01)
-            self.update_shield_right_from_oracle()
+#         if np.abs(last_action[1]) > 0.8 and (mode == 'left_right'
+#                                              or mode == 'all'):
+#             self.oracle_left_engine = NormalNormalKnownVar(
+#                 0.01,
+#                 prior_mean=(self.oracle_right_engine.mean - 0.05),
+#                 prior_var=0.01)
+#             self.update_shield_right_from_oracle()
 
-        if np.abs(last_action[0]) > 0.9 and mode == 'all':
-            self.oracle_left_engine = NormalNormalKnownVar(
-                0.01,
-                prior_mean=(self.oracle_main_engine.mean - 0.05),
-                prior_var=0.01)
-            self.update_shield_main_from_oracle()
+#         if np.abs(last_action[0]) > 0.9 and mode == 'all':
+#             self.oracle_left_engine = NormalNormalKnownVar(
+#                 0.01,
+#                 prior_mean=(self.oracle_main_engine.mean - 0.05),
+#                 prior_var=0.01)
+#             self.update_shield_main_from_oracle()
 
-    def update_shield_left_from_oracle(self):
-        self.shield_distribution_left_engine = self.shield_distribution_left_engine.update(
-            [self.oracle_left_engine.sample()])
+#     def update_shield_left_from_oracle(self):
+#         self.shield_distribution_left_engine = self.shield_distribution_left_engine.update(
+#             [self.oracle_left_engine.sample()])
 
-    def update_shield_right_from_oracle(self):
-        self.shield_distribution_right_engine = self.shield_distribution_right_engine.update(
-            [self.oracle_right_engine.sample()])
+#     def update_shield_right_from_oracle(self):
+#         self.shield_distribution_right_engine = self.shield_distribution_right_engine.update(
+#             [self.oracle_right_engine.sample()])
 
-    def update_shield_main_from_oracle(self):
-        self.shield_distribution_main_engine = self.shield_distribution_main_engine.update(
-            [self.oracle_main_engine.sample()])
+#     def update_shield_main_from_oracle(self):
+#         self.shield_distribution_main_engine = self.shield_distribution_main_engine.update(
+#             [self.oracle_main_engine.sample()])
 
-    # def create_oracle
+# def create_oracle
 
     def demo(self):
         import numpy as np
@@ -147,7 +146,6 @@ class UserFeedbackShield:
         print(model.sample())
         plt.show()
 
-
 if __name__ == '__main__':
 
     # 'RocketLander-v0'
@@ -163,6 +161,8 @@ if __name__ == '__main__':
     env = SafeLunarEnv(env)
 
     num_states = env.observation_space.shape[0]
+    import ipdb
+    ipdb.set_trace()
     print("Size of State Space ->  {}".format(num_states))
     num_actions = env.action_space.shape[0]
     print("Size of Action Space ->  {}".format(num_actions))
@@ -178,7 +178,7 @@ if __name__ == '__main__':
                       num_actions=num_actions,
                       lower_bound=lower_bound,
                       upper_bound=upper_bound,
-                      total_episodes=1000)
+                      total_episodes=5000)
 
     # To store reward history of each episode
     ep_reward_list = []

@@ -200,14 +200,14 @@ def learning_loop(total_episodes=1000):
 
     problem = "LunarLanderContinuous-v2"
     env = LunarLanderContinuous()
-    env = SafeLunarEnv(env)
+    # env = SafeLunarEnv(env)
 
     # if shield_provided != None:
     #     env = SafeLunarEnv(env, shield_provided)
     # else:
     #     env = SafeLunarEnv(env)
 
-    num_states = env.observation_space.shape[0] + 1
+    num_states = env.observation_space.shape[0]
     print("Size of State Space ->  {}".format(num_states))
     num_actions = env.action_space.shape[0]
     print("Size of Action Space ->  {}".format(num_actions))
@@ -283,12 +283,12 @@ def learning_loop(total_episodes=1000):
 
 # avg = learning_loop_per_iterations(total_episodes=10)
 
-avg = learning_loop(total_episodes=100)
-plt.plot(avg, color='red')
-plt.xlabel("Episode")
-plt.ylabel("Avg. Epsiodic Reward")
+# avg = learning_loop(total_episodes=1000)
+# plt.plot(avg, color='red')
+# plt.xlabel("Episode")
+# plt.ylabel("Avg. Epsiodic Reward")
 
-avg = learning_loop_with_shield(total_episodes=100)
+avg = learning_loop(total_episodes=5000)
 plt.plot(avg, color='blue')
 plt.xlabel("Episode")
 plt.ylabel("Avg. Epsiodic Reward")

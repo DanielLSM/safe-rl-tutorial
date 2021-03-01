@@ -7,22 +7,20 @@ import numpy as np
 
 
 class Shield:
-    def __init__(self,
-                 thresholds_main_engine=1,
-                 thresholds_left_engine=-1,
-                 thresholds_right_engine=1):
+    def __init__(self, thresholds_main_engine=0.9):
         self.thresholds_main_engine = thresholds_main_engine
-        self.thresholds_left_engine = thresholds_left_engine
-        self.thresholds_right_engine = thresholds_right_engine
 
     def shield_action(self, action):
 
         action_main_engine = np.clip(action[0], -self.thresholds_main_engine,
                                      self.thresholds_main_engine)
 
-        action_lateral_engines = np.clip(action[1],
-                                         self.thresholds_left_engine,
-                                         self.thresholds_right_engine)
-
-        action = [action_main_engine, action_lateral_engines]
+        action = [action_main_engine, action[1]]
         return action
+
+
+if __name__ == '__main__':
+    shield = Shield(thresholds_main_engine=0.9)
+    a = np.array([0, 1])
+    action = shield_action(a)
+    print(action)

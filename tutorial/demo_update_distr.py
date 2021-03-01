@@ -1,5 +1,17 @@
 # https://stats.stackexchange.com/questions/237037/bayesian-updating-with-new-data
 # https://www.cs.ubc.ca/~murphyk/Papers/bayesGauss.pdf
+# bigger pepper, humans not jump, either start later
+# lunar landing image, percentage of collisions on 100 rollouts3
+
+# font = {'sans-serif': 'Latin Modern Math',
+#         'family': 'sans-serif',
+#         # 'weight': 'bold',
+#         'size': 10}
+# # matplotlib.rc('font', **font)
+# matplotlib.rcParams['svg.fonttype'] = 'none'
+# matplotlib.rcParams['font.sans-serif'] = 'Latin Modern Math'
+# matplotlib.rcParams['font.family'] = 'sans-serif'
+# matplotlib.rcParams['font.size'] = 10
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -10,7 +22,7 @@ model.plot(-5, 5)
 plt.show()
 new_model = model
 
-for _ in range(1000):
+for _ in range(10):
     new_model = NormalNormalKnownVar(0.01,
                                      prior_mean=(new_model.mean + 0.05),
                                      prior_var=0.01)

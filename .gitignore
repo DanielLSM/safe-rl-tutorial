@@ -132,3 +132,6 @@ dmypy.json
 .vscode/
 README1*
 tutorial/dqn.py
+*.h5
+*.png
+runs/
