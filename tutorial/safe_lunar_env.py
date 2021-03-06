@@ -11,7 +11,7 @@ from ddpg import DDPG
 from shield import Shield
 from lundar_landing import LunarLanderContinuous
 
-from conjugate_prior import NormalNormalKnownVar
+# from conjugate_prior import NormalNormalKnownVar
 
 # Fuel is infinite, so an agent can learn to fly and then land on its first attempt.
 # Action is two real values vector from -1 to +1. First controls main engine, -1..0 off, 0..+1 throttle from 50% to 100% power.
